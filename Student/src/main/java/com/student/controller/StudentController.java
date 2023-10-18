@@ -1,8 +1,10 @@
 package com.student.controller;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,8 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.student.exception.ResourceNotFoundException;
 import com.student.model.Student;
-import com.student.repo.StudentRepo;
 import com.student.service.StudentService;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -53,5 +56,37 @@ public class StudentController {
 		return new ResponseEntity<>(updated,HttpStatus.CREATED);		
 	}
 	
+	@GetMapping("/csv")
+	@ResponseStatus(code = HttpStatus.CREATED)
+	public ResponseEntity<?> generateCSV() throws Exception {			
+		 try {
+				String details = serv.exportToCsv();
+				HttpHeaders headers = new HttpHeaders();
+				headers.add("Content-Disposition", "attachment; filename=Student_Details.csv");
+				return new ResponseEntity<>(details, headers, HttpStatus.CREATED);
+			} catch (ResourceNotFoundException e) {
+				return new ResponseEntity<>("No Calculated Loan Details Found", HttpStatus.BAD_REQUEST);
+			}catch (Exception e) {
+				return new ResponseEntity<>("Error exporting data to CSV", HttpStatus.BAD_REQUEST);
+			}
+	}
+	 @GetMapping("/export")
+	 @ResponseStatus(code = HttpStatus.CREATED)
+	 public void exportStudentsToExcel(HttpServletResponse response) throws IOException {
+	response.setContentType("application/octet-stream");
+    String headerKey = "Content-Disposition";
+    String headerValue = "attachment; filename=Student_Information_SimpleMethod.xlsx";
+    response.setHeader(headerKey, headerValue);
+		 serv.exportStudentsToExcel(response);
+	    }
+    @GetMapping("/export-to-excel")
+    @ResponseStatus(code = HttpStatus.CREATED)
+    public void exportToExcel(HttpServletResponse response) throws IOException {
+        response.setContentType("application/octet-stream");
+        String headerKey = "Content-Disposition";
+        String headerValue = "attachment; filename=Student_Information_withUtils.xlsx";
+        response.setHeader(headerKey, headerValue);
+        serv.exportCustomerToExcel(response);
+    }
 	
 }
